@@ -146,6 +146,7 @@ void setup() {
   Serial.begin(115200);
   while (!Serial) delay(10);
 
+  pinMode(LED_BUILTIN, OUTPUT);
   pinMode(M1_DIR, OUTPUT);
   pinMode(M2_DIR, OUTPUT);
   pinMode(M3_DIR, OUTPUT);
@@ -234,6 +235,13 @@ void loop() {
   }
   lastTriangleState = currentTriangleState;
   lastCircleState = currentCircleState;
+
+  if(globalFrame){
+    digitalWrite(LED_BUILTIN, HIGH);
+  }
+  else{
+    digitalWrite(LED_BUILTIN, LOW);
+  }
 
   static bool lastR1State = false;
   static bool lastL1State = false;
