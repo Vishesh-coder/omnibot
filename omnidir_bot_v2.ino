@@ -186,7 +186,7 @@ void loop() {
   else if (PS4.Down())
   vx = dpadSpeed;
   else if (PS4.Left())
-  y = -dpadSpeed;
+  vy = -dpadSpeed;
   else if (PS4.Right())
   vy =  dpadSpeed;
   else if (PS4.UpRight()){ 
