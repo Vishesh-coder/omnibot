@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>Robot Dashboard</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        overscroll-behavior: none;
+        background-color: #151518;
+        height: 100vh;
+        height: 100dvh;
+        width: 100%;
+        position: fixed;
+        inset: 0;
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-user-drag: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #app {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #151518;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: max(6px, env(safe-area-inset-top))
+          max(10px, env(safe-area-inset-right))
+          max(6px, env(safe-area-inset-bottom))
+          max(10px, env(safe-area-inset-left));
+      }
+      #content {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        height: 100%;
+        max-width: 900px;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      .side-panel {
+        flex: 0 0 auto;
+        height: 100%;
+        width: min(26vw, 190px);
+        background-color: #1e1e24;
+        border-radius: 16px;
+        padding: 6px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #2a2a35;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      }
+      .center-panel {
+        flex: 1 1 auto;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 6px;
+        min-width: 0;
+      }
+      .header-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .badge {
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: bold;
+        border: 1px solid #f44336;
+        background-color: rgba(244, 67, 54, 0.15);
+        color: #f44336;
+      }
+      .badge.connected {
+        border-color: #4caf50;
+        background-color: rgba(76, 175, 80, 0.15);
+        color: #4caf50;
+      }
+      .button-row {
+        display: flex;
+        gap: 8px;
+      }
+      .power-btn {
+        flex: 1;
+        padding: 8px;
+        border-radius: 10px;
+        border: none;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        color: #fff;
+        background-color: #c62828;
+        box-shadow:
+          0 0 16px rgba(244, 67, 54, 0.5),
+          0 4px 8px rgba(0, 0, 0, 0.4);
+        transition:
+          background-color 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+      .power-btn.on {
+        background-color: #2e7d32;
+        box-shadow:
+          0 0 16px rgba(76, 175, 80, 0.5),
+          0 4px 8px rgba(0, 0, 0, 0.4);
+      }
+      .frame-btn {
+        flex: 1;
+        padding: 8px;
+        border-radius: 10px;
+        border: 1px solid #3a3a48;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        color: #fff;
+        background-color: #1e1e24;
+        box-shadow:
+          0 0 14px rgba(0, 229, 255, 0.35),
+          0 4px 8px rgba(0, 0, 0, 0.4);
+        transition: box-shadow 0.2s ease;
+      }
+      .frame-btn.local {
+        box-shadow:
+          0 0 14px rgba(179, 136, 255, 0.35),
+          0 4px 8px rgba(0, 0, 0, 0.4);
+      }
+      .telemetry-grid,
+      .wheel-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+      .card,
+      .wheel-card {
+        background-color: #1e1e24;
+        border-radius: 12px;
+        padding: 6px 4px;
+        text-align: center;
+        border: 1px solid #2a2a35;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      }
+      .card-title {
+        color: #8a8a9e;
+        font-size: 9px;
+        font-weight: bold;
+        margin: 0 0 3px 0;
+        text-transform: uppercase;
+      }
+      .card-value {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 800;
+      }
+      .reset-heading-btn {
+        margin-top: 4px;
+        width: 100%;
+        padding: 3px 6px;
+        border-radius: 8px;
+        border: 1px solid #2a2a35;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        color: #00e5ff;
+        background-color: transparent;
+      }
+      .pwm-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      .pwm-btn {
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
+        border: 1px solid #3a3a48;
+        font-size: 13px;
+        font-weight: 800;
+        cursor: pointer;
+        color: #fff;
+        background-color: #151518;
+        transition: opacity 0.15s ease;
+      }
+      .pwm-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+      .wheel-value {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+        font-family: monospace;
+      }
+      .wheel-sub-label {
+        color: #6e6e82;
+        font-size: 8px;
+        font-weight: bold;
+        margin: 4px 0 1px 0;
+        text-transform: uppercase;
+      }
+      .wheel-sub-value {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 700;
+        font-family: monospace;
+        color: #8a8a9e;
+      }
+      .joy-base,
+      .slider-track {
+        position: relative;
+        background-color: #111;
+        border: 3px solid #222;
+        box-shadow:
+          inset 0px 4px 10px rgba(0, 0, 0, 0.8),
+          0 0 15px rgba(0, 0, 0, 0.5);
+        touch-action: none;
+        cursor: grab;
+      }
+      .joy-base {
+        width: min(22vh, 100px);
+        height: min(22vh, 100px);
+        border-radius: 50%;
+      }
+      .slider-track {
+        width: 140px;
+        height: 54px;
+        border-radius: 27px;
+      }
+      .knob {
+        position: absolute;
+        border-radius: 50%;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        transition: transform 0.15s ease-out;
+      }
+      .joy-knob {
+        width: 54px;
+        height: 54px;
+        background-color: #00e5ff;
+        box-shadow:
+          0 0 20px #00e5ff88,
+          0 4px 10px rgba(0, 0, 0, 0.5);
+      }
+      .slider-knob {
+        width: 44px;
+        height: 44px;
+        background-color: #b388ff;
+        box-shadow:
+          0 0 20px #b388ff88,
+          0 4px 10px rgba(0, 0, 0, 0.5);
+      }
+      .dpad-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        gap: 4px;
+        width: min(20vh, 92px);
+        height: min(20vh, 92px);
+        margin-top: 26px;
+      }
+      .dpad-btn {
+        border: 1px solid #3a3a48;
+        border-radius: 8px;
+        background-color: #1e1e24;
+        color: #00e5ff;
+        font-size: 14px;
+        font-weight: 800;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        touch-action: none;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        opacity: 0.85;
+        transition:
+          transform 0.08s ease,
+          box-shadow 0.08s ease,
+          opacity 0.08s ease;
+      }
+      .dpad-btn.pressed {
+        opacity: 1;
+        transform: scale(0.95);
+        box-shadow:
+          0 0 18px #00e5ff88,
+          0 2px 4px rgba(0, 0, 0, 0.4);
+      }
+      .dpad-empty {
+        visibility: hidden;
+      }
+      .status-text {
+        font-family: monospace;
+        background: #121212;
+        padding: 4px 8px;
+        border-radius: 8px;
+        margin-top: 6px;
+        font-size: 10px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="content">
+        <div class="side-panel">
+          <div class="joy-base" id="joyBase">
+            <div class="knob joy-knob" id="joyKnob"></div>
+          </div>
+          <div class="dpad-grid">
+            <div class="dpad-empty"></div>
+            <button class="dpad-btn" data-dir="up">&#9650;</button>
+            <div class="dpad-empty"></div>
+            <button class="dpad-btn" data-dir="left">&#9664;</button>
+            <div class="dpad-empty"></div>
+            <button class="dpad-btn" data-dir="right">&#9654;</button>
+            <div class="dpad-empty"></div>
+            <button class="dpad-btn" data-dir="down">&#9660;</button>
+            <div class="dpad-empty"></div>
+          </div>
+          <div class="status-text" id="vxvyText" style="color: #00e5ff">
+            Vx: 0 | Vy: 0
+          </div>
+        </div>
+
+        <div class="center-panel">
+          <div class="header-row">
+            <div class="badge" id="badge">Disconnected</div>
+          </div>
+
+          <div class="button-row">
+            <button class="power-btn" id="powerBtn">TAP TO CONNECT</button>
+            <button class="frame-btn" id="frameBtn">FRAME: GLOBAL</button>
+          </div>
+
+          <div class="telemetry-grid">
+            <div class="card">
+              <h3 class="card-title">Heading</h3>
+              <h2 class="card-value" id="headingVal" style="color: #00e5ff">
+                0.0&deg;
+              </h2>
+              <button class="reset-heading-btn" id="resetHeadingBtn">
+                RESET
+              </button>
+            </div>
+            <div class="card">
+              <h3 class="card-title">PWM Max</h3>
+              <div class="pwm-row">
+                <button class="pwm-btn" id="pwmMinusBtn" disabled>
+                  &minus;
+                </button>
+                <h2 class="card-value" id="pwmMaxVal" style="color: #ffb300">
+                  120
+                </h2>
+                <button class="pwm-btn" id="pwmPlusBtn">+</button>
+              </div>
+            </div>
+            <div class="card">
+              <h3 class="card-title">Mode</h3>
+              <h2 class="card-value" id="modeVal" style="color: #b388ff">
+                IDLE
+              </h2>
+            </div>
+          </div>
+
+          <div class="wheel-grid">
+            <div class="wheel-card">
+              <h3 class="card-title">Wheel 1 PWM</h3>
+              <h2 class="wheel-value" id="pwm1Val" style="color: #4ce6a8">0</h2>
+              <p class="wheel-sub-label">w1</p>
+              <p class="wheel-sub-value" id="w1Val">0.00</p>
+            </div>
+            <div class="wheel-card">
+              <h3 class="card-title">Wheel 2 PWM</h3>
+              <h2 class="wheel-value" id="pwm2Val" style="color: #4ce6a8">0</h2>
+              <p class="wheel-sub-label">w2</p>
+              <p class="wheel-sub-value" id="w2Val">0.00</p>
+            </div>
+            <div class="wheel-card">
+              <h3 class="card-title">Wheel 3 PWM</h3>
+              <h2 class="wheel-value" id="pwm3Val" style="color: #4ce6a8">0</h2>
+              <p class="wheel-sub-label">w3</p>
+              <p class="wheel-sub-value" id="w3Val">0.00</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="side-panel">
+          <div class="slider-track" id="sliderTrack">
+            <div class="knob slider-knob" id="sliderKnob"></div>
+          </div>
+          <div class="status-text" id="omegaText" style="color: #b388ff">
+            Omega: 0
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const ROBOT_IP = "ws://192.168.4.1/ws";
+      const TRANSMIT_INTERVAL_MS = 50;
+      const DEADZONE = 15;
+      const RECONNECT_DELAY_MS = 1500;
+      const BASE_PWM = 120;
+      const PWM_STEP = 20;
+      const MAX_SPEED_LEVEL = 5;
+      const WHEEL_ANGLES_DEG = [0, 120, 240];
+
+      let vx = 0,
+        vy = 0,
+        w = 0;
+      let socket = null;
+      let reconnectTimer = null;
+      let transmitTimer = null;
+      let isActive = false;
+      let frameMode = "GLOBAL";
+      let speedLevel = 0;
+      let pwmMax = BASE_PWM;
+      let spinGain = 0.35 - 17 / BASE_PWM;
+      let lastYaw = 0;
+      let localYawOffset = 0;
+
+      const badge = document.getElementById("badge");
+      const powerBtn = document.getElementById("powerBtn");
+      const frameBtn = document.getElementById("frameBtn");
+      const headingVal = document.getElementById("headingVal");
+      const pwmMaxVal = document.getElementById("pwmMaxVal");
+      const pwmMinusBtn = document.getElementById("pwmMinusBtn");
+      const pwmPlusBtn = document.getElementById("pwmPlusBtn");
+      const modeVal = document.getElementById("modeVal");
+      const pwm1Val = document.getElementById("pwm1Val");
+      const pwm2Val = document.getElementById("pwm2Val");
+      const pwm3Val = document.getElementById("pwm3Val");
+      const w1Val = document.getElementById("w1Val");
+      const w2Val = document.getElementById("w2Val");
+      const w3Val = document.getElementById("w3Val");
+      const vxvyText = document.getElementById("vxvyText");
+      const omegaText = document.getElementById("omegaText");
+      const resetHeadingBtn = document.getElementById("resetHeadingBtn");
+
+      const joyBase = document.getElementById("joyBase");
+      const joyKnob = document.getElementById("joyKnob");
+      const sliderTrack = document.getElementById("sliderTrack");
+      const sliderKnob = document.getElementById("sliderKnob");
+
+      function pad(n) {
+        return n.toString().padStart(4, " ");
+      }
+
+      function updateVxVyText() {
+        vxvyText.textContent = "Vx: " + pad(vx) + " | Vy: " + pad(vy);
+      }
+
+      function updateOmegaText() {
+        omegaText.textContent = "Omega: " + pad(w);
+      }
+
+      function updatePwmButtons() {
+        pwmMinusBtn.disabled = speedLevel <= 0;
+        pwmPlusBtn.disabled = speedLevel >= MAX_SPEED_LEVEL;
+      }
+
+      function recomputeDerived() {
+        pwmMax = BASE_PWM + speedLevel * PWM_STEP;
+        spinGain = 0.35 - 17 / pwmMax;
+        pwmMaxVal.textContent = pwmMax;
+        updatePwmButtons();
+      }
+
+      function worldToRobot(vxWorld, vyWorld, yawDeg) {
+        const yawRad = (yawDeg * Math.PI) / 180;
+        const c = Math.cos(yawRad);
+        const s = Math.sin(yawRad);
+        return {
+          vx: vxWorld * c + vyWorld * s,
+          vy: -vxWorld * s + vyWorld * c,
+        };
+      }
+
+      function inverseKinematics(vxIn, vyIn, wIn) {
+        const raw = WHEEL_ANGLES_DEG.map(function (deg) {
+          const t = (deg * Math.PI) / 180;
+          return -Math.sin(t) * vxIn + Math.cos(t) * vyIn + spinGain * wIn;
+        });
+        const maxMag = Math.max(
+          Math.abs(raw[0]),
+          Math.abs(raw[1]),
+          Math.abs(raw[2]),
+        );
+        if (maxMag > 1) {
+          return raw.map(function (v) {
+            return v / maxMag;
+          });
+        }
+        return raw;
+      }
+
+      function updatePreview() {
+        let vxIn = vx / 127;
+        let vyIn = vy / 127;
+        let wIn = w / 127;
+
+        if (frameMode === "GLOBAL") {
+          const heading = lastYaw - localYawOffset;
+          const rotated = worldToRobot(vxIn, vyIn, heading);
+          vxIn = rotated.vx;
+          vyIn = rotated.vy;
+        }
+
+        const outs = inverseKinematics(vxIn, vyIn, wIn);
+        w1Val.textContent = outs[0].toFixed(2);
+        w2Val.textContent = outs[1].toFixed(2);
+        w3Val.textContent = outs[2].toFixed(2);
+        pwm1Val.textContent = Math.round(Math.abs(outs[0]) * pwmMax);
+        pwm2Val.textContent = Math.round(Math.abs(outs[1]) * pwmMax);
+        pwm3Val.textContent = Math.round(Math.abs(outs[2]) * pwmMax);
+      }
+
+      function setFrameUi() {
+        frameBtn.textContent = "FRAME: " + frameMode;
+        if (frameMode === "LOCAL") {
+          frameBtn.classList.add("local");
+        } else {
+          frameBtn.classList.remove("local");
+        }
+      }
+
+      function cleanupSocket() {
+        if (reconnectTimer) {
+          clearTimeout(reconnectTimer);
+          reconnectTimer = null;
+        }
+        if (transmitTimer) {
+          clearInterval(transmitTimer);
+          transmitTimer = null;
+        }
+        if (socket) {
+          socket.onclose = null;
+          socket.onerror = null;
+          socket.close();
+          socket = null;
+        }
+        vx = 0;
+        vy = 0;
+        w = 0;
+        updateVxVyText();
+        updateOmegaText();
+        badge.textContent = "Disconnected";
+        badge.classList.remove("connected");
+      }
+
+      function startTransmitLoop() {
+        if (transmitTimer) return;
+        transmitTimer = setInterval(function () {
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(
+              JSON.stringify({ type: "control", vx: vx, vy: vy, w: w }),
+            );
+          }
+        }, TRANSMIT_INTERVAL_MS);
+      }
+
+      function connectSocket() {
+        if (!isActive) return;
+
+        socket = new WebSocket(ROBOT_IP);
+
+        socket.onopen = function () {
+          badge.textContent = "Connected";
+          badge.classList.add("connected");
+          socket.send(
+            JSON.stringify({ type: "frame", global: frameMode === "GLOBAL" }),
+          );
+        };
+
+        socket.onclose = function () {
+          badge.textContent = "Disconnected";
+          badge.classList.remove("connected");
+          vx = 0;
+          vy = 0;
+          w = 0;
+          updateVxVyText();
+          updateOmegaText();
+          if (isActive) {
+            reconnectTimer = setTimeout(connectSocket, RECONNECT_DELAY_MS);
+          }
+        };
+
+        socket.onerror = function (err) {
+          console.error("WebSocket error:", err);
+          socket.close();
+        };
+
+        socket.onmessage = function (event) {
+          let data;
+          try {
+            data = JSON.parse(event.data);
+          } catch (e) {
+            console.error("bad telemetry json", e);
+            return;
+          }
+
+          if (typeof data.yaw === "number") {
+            lastYaw = data.yaw;
+            headingVal.textContent = data.yaw.toFixed(1) + "\u00B0";
+          }
+          if (data.mode) {
+            modeVal.textContent = data.mode;
+          }
+          if (typeof data.globalFrame === "boolean") {
+            frameMode = data.globalFrame ? "GLOBAL" : "LOCAL";
+            setFrameUi();
+          }
+          if (typeof data.speedLevel === "number") {
+            speedLevel = data.speedLevel;
+            recomputeDerived();
+          }
+
+          updatePreview();
+        };
+      }
+
+      function togglePower() {
+        if (!isActive) {
+          isActive = true;
+          powerBtn.textContent = "ON \u2014 TAP TO STOP";
+          powerBtn.classList.add("on");
+          connectSocket();
+          startTransmitLoop();
+          const el = document.documentElement;
+          if (el.requestFullscreen) {
+            el.requestFullscreen().catch(function (err) {
+              console.warn("fullscreen request failed", err);
+            });
+          }
+        } else {
+          isActive = false;
+          powerBtn.textContent = "TAP TO CONNECT";
+          powerBtn.classList.remove("on");
+          cleanupSocket();
+          if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(function () {});
+          }
+        }
+      }
+
+      function toggleFrame() {
+        frameMode = frameMode === "GLOBAL" ? "LOCAL" : "GLOBAL";
+        setFrameUi();
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(
+            JSON.stringify({ type: "frame", global: frameMode === "GLOBAL" }),
+          );
+        }
+      }
+
+      function sendSpeedDelta(delta) {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: "speed", delta: delta }));
+        }
+      }
+
+      function increaseSpeed() {
+        if (speedLevel >= MAX_SPEED_LEVEL) return;
+        speedLevel++;
+        recomputeDerived();
+        sendSpeedDelta(1);
+        updatePreview();
+      }
+
+      function decreaseSpeed() {
+        if (speedLevel <= 0) return;
+        speedLevel--;
+        recomputeDerived();
+        sendSpeedDelta(-1);
+        updatePreview();
+      }
+
+      function resetHeading() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: "reset_heading" }));
+        }
+        localYawOffset = lastYaw;
+        updatePreview();
+      }
+
+      powerBtn.addEventListener("click", togglePower);
+      frameBtn.addEventListener("click", toggleFrame);
+      pwmPlusBtn.addEventListener("click", increaseSpeed);
+      pwmMinusBtn.addEventListener("click", decreaseSpeed);
+      resetHeadingBtn.addEventListener("click", resetHeading);
+
+      let joyDragging = false;
+      const joySize = 100,
+        joyKnobSize = 54;
+      const joyMaxDist = (joySize - joyKnobSize) / 2;
+
+      function updateJoy(e) {
+        const rect = joyBase.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        let dx = e.clientX - cx;
+        let dy = e.clientY - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > joyMaxDist) {
+          const ratio = joyMaxDist / dist;
+          dx *= ratio;
+          dy *= ratio;
+        }
+        joyKnob.style.transform =
+          "translate(calc(-50% + " + dx + "px), calc(-50% + " + dy + "px))";
+
+        let newVx = Math.round((dy / joyMaxDist) * 127);
+        let newVy = Math.round((dx / joyMaxDist) * 127);
+        if (Math.abs(newVx) < DEADZONE) newVx = 0;
+        if (Math.abs(newVy) < DEADZONE) newVy = 0;
+        vx = newVx;
+        vy = newVy;
+        updateVxVyText();
+        updatePreview();
+      }
+
+      joyBase.addEventListener("pointerdown", function (e) {
+        joyBase.setPointerCapture(e.pointerId);
+        joyDragging = true;
+        joyKnob.style.transition = "none";
+        updateJoy(e);
+      });
+      joyBase.addEventListener("pointermove", function (e) {
+        if (!joyDragging) return;
+        updateJoy(e);
+      });
+      function endJoy() {
+        joyDragging = false;
+        joyKnob.style.transition = "transform 0.15s ease-out";
+        joyKnob.style.transform = "translate(-50%, -50%)";
+        vx = 0;
+        vy = 0;
+        updateVxVyText();
+        updatePreview();
+      }
+      joyBase.addEventListener("pointerup", endJoy);
+      joyBase.addEventListener("pointercancel", endJoy);
+
+      document.querySelectorAll(".dpad-btn").forEach(function (btn) {
+        const dir = btn.getAttribute("data-dir");
+        btn.addEventListener("pointerdown", function (e) {
+          btn.setPointerCapture(e.pointerId);
+          btn.classList.add("pressed");
+          let newVx = 0,
+            newVy = 0;
+          if (dir === "up") newVx = -127;
+          else if (dir === "down") newVx = 127;
+          else if (dir === "left") newVy = -127;
+          else if (dir === "right") newVy = 127;
+          vx = newVx;
+          vy = newVy;
+          updateVxVyText();
+          updatePreview();
+        });
+        function release() {
+          btn.classList.remove("pressed");
+          vx = 0;
+          vy = 0;
+          updateVxVyText();
+          updatePreview();
+        }
+        btn.addEventListener("pointerup", release);
+        btn.addEventListener("pointercancel", release);
+        btn.addEventListener("pointerleave", release);
+      });
+
+      let sliderDragging = false;
+      const sliderWidth = 140,
+        sliderKnobSize = 44;
+      const sliderMaxDist = (sliderWidth - sliderKnobSize) / 2;
+
+      function updateSlider(e) {
+        const rect = sliderTrack.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        let dx = e.clientX - cx;
+        if (Math.abs(dx) > sliderMaxDist) {
+          dx = sliderMaxDist * Math.sign(dx);
+        }
+        sliderKnob.style.transform =
+          "translate(calc(-50% + " + dx + "px), -50%)";
+
+        let newW = Math.round((dx / sliderMaxDist) * 127);
+        if (Math.abs(newW) < DEADZONE) newW = 0;
+        w = newW;
+        updateOmegaText();
+        updatePreview();
+      }
+
+      sliderTrack.addEventListener("pointerdown", function (e) {
+        sliderTrack.setPointerCapture(e.pointerId);
+        sliderDragging = true;
+        sliderKnob.style.transition = "none";
+        updateSlider(e);
+      });
+      sliderTrack.addEventListener("pointermove", function (e) {
+        if (!sliderDragging) return;
+        updateSlider(e);
+      });
+      function endSlider() {
+        sliderDragging = false;
+        sliderKnob.style.transition = "transform 0.15s ease-out";
+        sliderKnob.style.transform = "translate(-50%, -50%)";
+        w = 0;
+        updateOmegaText();
+        updatePreview();
+      }
+      sliderTrack.addEventListener("pointerup", endSlider);
+      sliderTrack.addEventListener("pointercancel", endSlider);
+
+      window.addEventListener("blur", function () {
+        vx = 0;
+        vy = 0;
+        w = 0;
+        updateVxVyText();
+        updateOmegaText();
+        updatePreview();
+        joyKnob.style.transform = "translate(-50%, -50%)";
+        sliderKnob.style.transform = "translate(-50%, -50%)";
+      });
+
+      recomputeDerived();
+      updatePreview();
+
+      document.addEventListener("fullscreenchange", function () {
+        if (!document.fullscreenElement && isActive) {
+          isActive = false;
+          powerBtn.textContent = "TAP TO CONNECT";
+          powerBtn.classList.remove("on");
+          cleanupSocket();
+        }
+      });
+
+      window.addEventListener("beforeunload", cleanupSocket);
+    </script>
+  </body>
+</html>
